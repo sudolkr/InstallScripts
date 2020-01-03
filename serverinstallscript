@@ -43,7 +43,7 @@ sudo apt install git -y
 
 cd ~/
 
-git https://github.com/sudolkr/InstallScripts
+git clone https://github.com/sudolkr/InstallScripts
 
 # 1 Monter les disques et copier les scripts
 

@@ -6,9 +6,13 @@ sudo apt update
 
 sudo apt full-upgrade -y
 
+sudo apt install git -y
+
+git clone https://github.com/sudolkr/InstallScripts
+
 # Installer les logiciels de base
 
-sudo apt install preload openssh-server filezilla wget python3 software-properties-common firefox thunderbird zsh ufw curl git rsync 
+sudo apt install preload openssh-server filezilla wget python3 software-properties-common firefox thunderbird zsh ufw curl rsync 
 
 # Configuration ssh
 
