@@ -1,0 +1,8 @@
+UUID=ccb3574c-02f7-11ea-9219-94de80137ca6 / ext4 defaults 0 0 
+UUID=3F9A-1E70 /boot/efi vfat defaults 0 0
+/swap.img	none	swap	sw	0	0
+/dev/sdb1	/home/sudolkr/GROSNB	ext4	auto	0	0
+/dev/sdc1	/home/sudolkr/GIANTNB	ext4	auto	0	0
+/dev/sdd1	/home/sudolkr/ENORMENB	ext4	auto	0	0
+/dev/sde1	/home/sudolkr/ANOTHANB	ext4	auto	0	0
+
