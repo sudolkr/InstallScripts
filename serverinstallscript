@@ -39,14 +39,19 @@ sudo apt update
 
 sudo apt full-upgrade -y
 
+sudo apt install git -y 
+
+cd ~/
+
+git https://github.com/sudolkr/InstallScripts
 
 # 1 Monter les disques et copier les scripts
 
 mkdir ~/GROSNB
 
-sudo mount -t ext4 /dev/sdb1 /home/sudolkr/GROSNB
+sudo mount -t ext4 /dev/sdb1 ~/GROSNB
 
-sudo cp /home/sudolkr/GROSNB/SMPLCF/SMPLCF/fstab1 /etc/fstab
+sudo cp ~/InstallScripts/fstab1 /etc/fstab
 
 sudo mount -a
 
@@ -57,28 +62,28 @@ sudo mount -a
 
 # 2 Assignations DHCP 
 
-sudo cp /home/sudolkr/GIANTNB/GROSNB/SMPLCF/SMPLCF/hosts /etc/hosts
+sudo cp ~/InstallScripts/hosts /etc/hosts
 
 
 # 3 Installer les logiciels de base 
 
-sudo apt install nfs-kernel-server software-properties-common curl git rsync zsh ufw python3 vsftpd -y 
+sudo apt install nfs-kernel-server software-properties-common curl rsync zsh ufw python3 vsftpd -y 
 
 
 # 4 Mettre en place l'export des disques durs sur le réseau local
 
 sudo service nfs-kernel-server start
 
-sudo cp /home/sudolkr/GROSNB/SMPLCNF/SMPLCNF/exports /etc/exports
+sudo cp ~/InstallScripts/exports /etc/exports
 
 sudo service nfs-kernel-server restart
 
 
 # 5 Configuration ssh
 
-cp /home/sudolkr/GROSNB/SMPLCNF/SMPLCNF/ssh_config /etc/ssh/ssh_config
+cp ~/InstallScripts/ssh_config /etc/ssh/ssh_config
 
-cp /home/sudolkr/GROSNB/SMPLCNF/SMPLCNF/sshd_config /etc/ssh/sshd_config
+cp ~/InstallScripts/sshd_config /etc/ssh/sshd_config
 
 sudo service sshd reload
 
@@ -98,7 +103,7 @@ sudo ufw reload
 
 sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 
-cp /home/sudolkr/GROSNB/SMPLCNF/SMPLCNF/.zshrc /home/sudolkr/.zshrc
+cp ~/InstallScripts/.zshrc ~/.zshrc
 
 
 # 8 Installation de docker,nextcloud,mariadb et letsencrypt
@@ -117,7 +122,7 @@ git clone https://github.com/ichiTechs/Dockerized-SSL-NextCloud-with-MariaDB.git
 
 cd Dockerized-SSL-NextCloud-with-MariaDB
 
-cp /home/sudolkr/GROSNB/SMPLCF/SMPLCF/docker-compose.yml /home/sudolkr/Doclerizd-SSL-NextCloud-wiyh-MariaDB/docker-compose.yml
+cp ~/InstallScripts/docker-compose.yml ~/Doclerizd-SSL-NextCloud-wiyh-MariaDB/docker-compose.yml
 
 sudo docker network create nginx-proxy
 
