@@ -1,0 +1,96 @@
+#!/bin/bash
+
+
+# Script d'installation du sudolkserver comprenant le nextcloud, les 
+# différents sites web installés et les config réseaux diverses
+
+#&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&%&&%&&%%%%%%%%%%%%&&&&&&&&&&&%%%%%%%%%%%%%%%%%%%%%%%%&&&&
+#&&&&&&&@@&&&&&&&&&&&&&&&&&&&&&&@&&&&&&&%&&&&&&&&&%%%%&&&&%%%%%&&&&&&&&&&%%%%%%%%%%%%%%%%%%%%%%%&%&&
+#&&&&&@@@&&@@&&&&&&&&&&&&&&&&&&&@&&&&%%%%&&&&&&%%%%%%%%&@@@@@@@@@@@&&&&&%%&%%%%%%%%%%%%%%%%%%%%&%&&&
+#&&&&&@@&&&&&&&&&@&&&&@&&&&&&&&&@&&&%%%%%&&&&&&&&&&&&@@@@@@@@@@@@@@@@@@&&&%&%%%%%%%%%%%%%%%%%%%%%&&&
+#&%&&@@&&&&&&&&&&@&&&&@&&&&%&&&&@%&@@@@@@&@&&&&&&&&@@@@@@@@@@@@@@@@@@@@@@@&&&&%%%%&%%%%%%%%%%%%%&&&&
+#%&&&&@@@@&&&&&&&@&&&&@&&&@@@@@@%@@%%%%%%@@&&&&&&@@@@@&%%%%%%&&&@@@@@@@@@@@&%&&%%%%%%%%%%%%%%%&&&&&
+#%%%&%%&@@@&&&&&&@&&&&@&&&@@%%%%@@@%%%%%%@@%&&&&@@@@&%%###########%%&&@@@@@@@&&&&&&%%%%%%%%%%%&&&&&&
+#%%%%%%%%&&@@&&%&@&&&&@&&&@@&%%@%%@%%%%%@@@&&&&&@@@&%####(((((((####%%&@@@@@@@&%%&&&%%%%%%%%&&&&&&&&
+#&%%%%%@@@@@&&&&&@&&&@%%&%%&@%@%%%%@@@@@@@&&&&&&@@%%%###((((((((#####%%%&@@@@@@%%%%&%&%%%%%%&&&&&&&&
+#%%%%%%%%%%%%%&&%@@@@%%&%%%%%%%%%%%%%%%%%&&&&&&&&%%##(((((((((((######%%&@@@@@@%%%%%%%&&&%%&&&&&&&&&
+#%%%%%%&%%%%%%%&%%%%%%%%%%&%%%%%%%%%%%%%%&&&&&%#&&%&&&%((//////((((####%%@@@@@@%%&%&%%&%%%%%&%%&&&&&
+#%%%%%%%%%%%%&&&%%%%%%%&%%%%%%%%%%%%%%%%%&&&&&%%&%%%%%&&%###((####(%%%%%%%&@@@@%%%%%%%%%%%%%%&&&&&&&
+#&&&&&&&%%%%%%%%&%&&&%%%%&%%%%%%%%%%%%%%&&&&%&%%##%&%%##,//(/#%%%%%%&&&&%%#@@@@%%%%%%%%%%%%%%%%&&&&&
+#%%%&&%%%%%%%%%%%&%%%%%%%%%%%%%%%%%%%%%%&&&&%####%%###(#((##### /#%%%&%%&&@@%%%%%%%%%%%%%%%%&&%&&&
+#%%%@@%%%%%%%%@%%%@%%%%@@@@@@@@%%%%%%%%%&%%%#&%#(#########(((/#(((##%%%%%&@&&&%%%%%%%%%%%%%%%%%&&&&&
+#%%%@@%%%%%%%%@%@@@%%%%@&%%%%%@&%%%%%%%%&&%%%&%#(((((((##(((####((####%%%%%%%%%%%%%%%%%%%%%%%%%&%&&&
+#%%%@@%%%%%%%%@@&%%%%%%@&%%&@@@%%%%%%%%%&&%%%&%#(((////#(///(#(((###%%#%%&%%%%%%%%%%%%%%%%%%%%%%%%%&
+#%%%@%%%%%%%%%@@%%%%%%%@@@@%%%%%%%%%%%%%%%&%%&%#(((//*/(#(/###//((((###%&#%%%%%%%%%%%%%%%%%%%%%%%&
+#%%%@%%%%%%%%%@%@@%%%%%@@%%@@%%%%%%%%%%%%%%%%%%#((///((((((((////(((##%%&&%%%%%%%%%%%%%%%%%%%%%&%%%&
+#%%%@@@@@@@%%%@%%@@%%%%@@%%%%@%%%%%%%%%%%%%%%%%#(((###%%##%#((((/((###%%&%%&&@&%%%%%%%%%%%%%%%%%%%&&
+#%%%%%%%%%%%%%%%%%%%%%%&@%%%%%%%%%%%%%%%%%%%%%%%##((#%%%%##((##%(((##%%&@@@&&&&%%%%%%%%%%%%%%%%%&&&&
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%##(#((((/(((((((###%%&%%&&&%%%%%%%%%%%%%%%%%%%%%%%&
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%#(((//((((((((##%%%&%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#&&&%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%#(((((((((((#%%%%&%%%%%%%%%%%%%%%%%%%%&&&&@&&@&&&
+#&&%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%&#((((((((#%%%%%%%%%%%%%%%%%%%%%%%%%&&&&&&&&&&@@@
+#&&&&&%%%%%%%%%%%mange%tes%morts%%%%%%%%%%%%%%%%%&&@&&%&%%%%%&&%%%%%&&%%%%%%%%%%%&%&&&&&&&&&&&@&@@@@
+#&&&&%&%%%%%%%%%%%%%%&%%%%%%%%%%%%%%%%%%%%%%%%%%%&%%&@@&&&&&&&%%#%%%%&&&&&%&&&&&%%&&&&&&&&&&&@@@@@@@
+#&&&&&%&&&%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%&%#%%%%########%%%%&&&&%%%%&&&%%&&&&&&&&&&&&&&@&@@@
+
+## Mettre à jour
+
+sudo apt update &&
+sudo apt full-upgrade -y &&
+sudo apt install git nfs-kernel-server software-properties-common curl rsync zsh ufw python3 vsftpd apache2 php libapache2-mod-php php-mysql iftop glances php-curl php-gd php-mbstring php-xml php-xmlrpc php-soap php-intl php-zip unzip python3-certbot-apache -y &&  
+
+## Installation de Mysql
+ 
+sudo apt install mysql-server &&
+
+## Installation OhMyZsh!
+
+sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" &&
+
+
+# Firewall règles perso 
+
+sudo ufw enable &&
+
+sudo ufw allow PORT POUR SSH,2049,80,443,3306,9000/tcp &&
+
+sudo ufw deny 22 &&
+
+sudo ufw reload &&
+
+# Générer clef SSH et mettre en place les échanges de clefs 
+
+ssh-keygen -t rsa  -b 4096 -C "username@provider.fr" &&
+ssh-copy-id -i ~/.ssh/id_rsa.pub <username>@<ipaddress> &&
+
+## Installation de wordpress
+
+cd /tmp &&
+curl -O https://wordpress.org/latest.tar.gz &&
+tar xzvf latest.tar.gz &&
+touch /tmp/wordpress/.htaccess &&
+cp /tmp/wordpress/wp-config-sample.php /tmp/wordpress/wp-config.php &&
+mkdir /tmp/wordpress/wp-content/upgrade
+
+#MANQUE PARTIE CLE SECRETE WORDPRESS 
+
+# MYSQL
+
+sudo mysql &&
+create database nextcloud; &&
+create user 'nextclouduser'@'localhost' identified by 'PASSWORD'; &&
+grant all privileges on nextcloud.* to 'nextclouduser'@'localhost'; &&
+create database wordpress; &&
+CREATE USER 'wordpressuser'@'localhost' IDENTIFIED BY 'PASSWORD';
+grant all privileges on wordpress.* to 'wordpressuser'@'localhost'; &&
+FLUSH PRIVILEGES; &&
+exit &&
+
+# Donner les bonnes permissions aux dossiers web
+
+sudo chown www-data:www-data /var/www/html/cloud/ -R &&
+sudo chown www-data:www-data /var/www/html/wordpress/ -R &&
+
+# Configurer le certificat SSL
+
+sudo certbot --apache
