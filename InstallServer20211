@@ -2,7 +2,8 @@
 
 
 # Script d'installation du sudolkserver comprenant le nextcloud, les 
-# différents sites web installés et les config réseaux diverses
+# différents sites web installés et les config réseaux diverses. Ne pas lancer le script tel-quel, 
+# copiez-collez les commandes 
 
 #&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&%&&%&&%%%%%%%%%%%%&&&&&&&&&&&%%%%%%%%%%%%%%%%%%%%%%%%&&&&
 #&&&&&&&@@&&&&&&&&&&&&&&&&&&&&&&@&&&&&&&%&&&&&&&&&%%%%&&&&%%%%%&&&&&&&&&&%%%%%%%%%%%%%%%%%%%%%%%&%&&
