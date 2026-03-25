@@ -38,7 +38,10 @@
 
 sudo apt update &&
 sudo apt full-upgrade -y &&
-sudo apt install git nfs-kernel-server software-properties-common curl rsync zsh ufw python3 vsftpd apache2 php libapache2-mod-php php-mysql iftop glances php-curl php-gd php-mbstring php-xml php-xmlrpc php-soap php-intl php-zip unzip python3-certbot-apache -y &&  
+sudo apt install git nfs-kernel-server software-properties-common curl rsync zsh ufw python3 vsftpd apache2 php libapache2-mod-php php-mysql iftop glances php-curl php-gd php-mbstring php-xml php-xmlrpc php-soap php-intl php-zip unzip python3-certbot-apache mysql-server -y &&  
+
+############################################################################################################################
+# Install docker
 
 # Add Docker's official GPG key:
 sudo apt update &&
@@ -60,6 +63,7 @@ sudo apt update
 
 sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
+############################################################################################################################
 
 ## Installation de Mysql
  
@@ -69,6 +73,7 @@ sudo apt install mysql-server &&
 
 sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)" &&
 
+############################################################################################################################
 
 # Firewall règles perso 
 
@@ -80,10 +85,15 @@ sudo ufw deny 22 &&
 
 sudo ufw reload &&
 
+############################################################################################################################
+
 # Générer clef SSH et mettre en place les échanges de clefs 
 
 ssh-keygen -t rsa  -b 4096 -C "username@provider.fr" &&
 ssh-copy-id -i ~/.ssh/id_rsa.pub <username>@<ipaddress> &&
+
+############################################################################################################################
+
 
 ## Installation de wordpress
 
@@ -95,6 +105,9 @@ cp /tmp/wordpress/wp-config-sample.php /tmp/wordpress/wp-config.php &&
 mkdir /tmp/wordpress/wp-content/upgrade
 
 #MANQUE PARTIE CLE SECRETE WORDPRESS 
+
+############################################################################################################################
+
 
 # MYSQL
 
@@ -113,6 +126,131 @@ exit &&
 sudo chown www-data:www-data /var/www/html/cloud/ -R &&
 sudo chown www-data:www-data /var/www/html/wordpress/ -R &&
 
-# Configurer le certificat SSL
+############################################################################################################################
+
+#Installation de Nextcloud
+
+sudo apt install php php-common libapache2-mod-php php-bz2 php-gd php-mysql \
+php-curl php-mbstring php-imagick php-zip php-common php-curl php-xml \
+php-json php-bcmath php-xml php-intl php-gmp zip unzip wget -y
+
+a2enmod env rewrite dir mime headers setenvif ssl
+
+sudo mysql
+
+CREATE USER 'ncloud'@'localhost' IDENTIFIED BY 'Sh@do5!d';
+CREATE DATABASE ncloud CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+GRANT ALL PRIVILEGES ON ncloud.* TO 'ncloud'@'localhost';
+FLUSH PRIVILEGES;
+quit;
+
+cd /var/www/html
+sudo wget https://download.nextcloud.com/server/releases/latest.zip
+sudo unzip latest.zip
+
+sudo rm latest.zip
+
+sudo chown -R www-data:www-data /var/www/html/nextcloud/
+
+cd /var/www/html/nextcloud
+sudo -u www-data php occ  maintenance:install --database \
+"mysql" --database-name "ncloud"  --database-user "ncloud" --database-pass \
+'Sh@do5!d' --admin-user "admin" --admin-pass "password"
+
+vi /var/www/html/nextcloud/config/config.php
+
+  'trusted_domains' =>
+  array (
+    0 => 'localhost',
+    1 => 'nc.mailserverguru.com',   // we Included the Sub Domain
+  ),
+  .....
+
+sudo apt install php8.3-fpm
+
+a2dismod php8.3
+a2dismod mpm_prefork
+
+a2enmod mpm_event proxy_fcgi setenvif
+a2enconf php8.3-fpm
+
+sudo sed -i 's/^upload_max_filesize.*/upload_max_filesize = 64M/; s/^post_max_size.*/post_max_size = 96M/; s/^memory_limit.*/memory_limit = 512M/; s/^max_execution_time.*/max_execution_time = 600/; s/^;max_input_vars.*/max_input_vars = 3000/; s/^max_input_time.*/max_input_time = 1000/' /etc/php/8.3/fpm/php.ini
+sudo sed -i 's/^pm.max_children = .*/pm.max_children = 64/; s/^pm.start_servers = .*/pm.start_servers = 16/; s/^pm.min_spare_servers = .*/pm.min_spare_servers = 16/; s/^pm.max_spare_servers = .*/pm.max_spare_servers = 32/' /etc/php/8.3/fpm/pool.d/www.conf
+
+sudo service php8.3-fpm restart
+
+Add in virtual host :
+
+	<FilesMatch ".php$">
+         SetHandler "proxy:unix:/var/run/php/php8.3-fpm.sock|fcgi://localhost/"
+	</FilesMatch>
+
+vi /etc/php/8.3/fpm/conf.d/10-opcache.ini
+
+zend_extension=opcache.so
+opcache.enable_cli=1
+opcache.jit=on
+opcache.jit = 1255
+opcache.jit_buffer_size = 128M
+
+service php8.3-fpm restart
+
+sudo apt install php8.3-apcu
+
+vi /etc/php/8.3/fpm/conf.d/20-apcu.ini
+
+extension=apcu.so
+apc.enable_cli=1
+
+systemctl restart php8.3-fpm
+systemctl restart apache2
+
+sudo apt install redis-server php-redis -y
+
+systemctl start redis-server
+systemctl enable redis-server
+
+vi /etc/redis/redis.conf
+
+port 0
+unixsocket /var/run/redis/redis.sock
+unixsocketperm 770
+
+usermod -a -G redis www-data
+
+vi /var/www/html/nextcloud/config/config.php
+
+'filelocking.enabled' => 'true',
+'memcache.locking' => '\OC\Memcache\Redis',
+'redis' => [
+     'host'     => '/var/run/redis/redis.sock',
+     'port'     => 0,
+     'dbindex'  => 0,
+     'password' => '',
+     'timeout'  => 1.5,
+],
+
+vi /etc/php/8.3/fpm/php.ini
+
+redis.session.locking_enabled=1
+redis.session.lock_retries=-1
+redis.session.lock_wait_time=10000
+
+systemctl restart redis-server
+systemctl restart php8.3-fpm
+systemctl restart apache2
+
+vi /var/www/html/nextcloud/config/config.php
+
+'htaccess.RewriteBase' => '/',
+
+sudo -u www-data php --define apc.enable_cli=1 /var/www/html/nextcloud/occ maintenance:update:htaccess
+
+
+############################################################################################################################
+
+
+
+# Configurer les certificats SSL
 
 sudo certbot --apache
